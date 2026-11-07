@@ -30,14 +30,16 @@ jobs:
     if: ${{ !github.event.repository.is_template }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    outputs:
-      changed: ${{ steps.save.outputs.changed }}
     env:
+      PYTHONUNBUFFERED: "1"
       APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
       DIGEST_EMAIL: ${{ secrets.DIGEST_EMAIL }}
+      DIGEST_FROM: ${{ secrets.DIGEST_FROM }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    outputs:
+      publish: ${{ steps.save.outputs.publish }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -46,41 +48,51 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
+      # The output also goes on the run's summary page, so it's easy to find.
       - name: Run
+        shell: bash
         run: |
           case "${{ inputs.action }}" in
-            run-now)      python run.py --now ;;
-            check-setup)  python run.py --check ;;
-            test-harshmaur) python run.py --test-scraper harshmaur ;;
-            test-clearpath) python run.py --test-scraper clearpath ;;
-            *)            python run.py ;;
+            run-now)        command="--now" ;;
+            check-setup)    command="--check" ;;
+            test-harshmaur) command="--test-scraper harshmaur" ;;
+            test-clearpath) command="--test-scraper clearpath" ;;
+            *)              command="" ;;
           esac
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          status=0
+          python run.py $command 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit $status
 
       # Runs even after a failure, so a retry doesn't pay for the same step twice.
       - name: Save results
         id: save
         if: always()
         run: |
+          publish=false
           git add data
-          if git diff --cached --quiet; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
+          if ! git diff --cached --quiet; then
             git config user.name "ai-radar"
             git config user.email "ai-radar@users.noreply.github.com"
             git commit -m "Digest $(date -u +%F)"
             git push
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+            publish=true
           fi
+          # run-now always republishes, in case the dashboard was switched on late.
+          if [ "${{ inputs.action }}" = "run-now" ]; then publish=true; fi
+          if [ ! -f site/index.html ]; then publish=false; fi
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
 
       - name: Prepare dashboard
-        if: always() && steps.save.outputs.changed == 'true'
+        if: always() && steps.save.outputs.publish == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: site
 
   dashboard:
     needs: radar
-    if: always() && needs.radar.outputs.changed == 'true'
+    if: always() && needs.radar.outputs.publish == 'true'
     runs-on: ubuntu-latest
     permissions:
       pages: write

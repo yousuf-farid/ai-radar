@@ -76,7 +76,8 @@ def build_site(cfg, data_dir, site_dir):
     paths = sorted((data_dir / "digests").glob("*.json"), reverse=True)[:DASHBOARD_DAYS]
     digests = [read_json(p, {}) for p in paths]
     site_dir.mkdir(parents=True, exist_ok=True)
-    (site_dir / "index.html").write_text(render.dashboard(digests, cfg["categories"]), encoding="utf-8")
+    page = render.dashboard(digests, cfg["categories"], cfg.get("name", "AI Radar"))
+    (site_dir / "index.html").write_text(page, encoding="utf-8")
 
 
 def dashboard_url():
@@ -149,9 +150,26 @@ def demo(cfg):
         digests.append({"date": (today - timedelta(days=offset)).isoformat(), "picks": picks})
     out = ROOT / "preview"
     out.mkdir(exist_ok=True)
-    (out / "index.html").write_text(render.dashboard(digests, cfg["categories"]), encoding="utf-8")
+    page = render.dashboard(digests, cfg["categories"], cfg.get("name", "AI Radar"))
+    (out / "index.html").write_text(page, encoding="utf-8")
     (out / "email.html").write_text(render.email_html(digests[0], "https://example.com/"), encoding="utf-8")
     print(f"Sample dashboard: {out / 'index.html'}\nSample email: {out / 'email.html'}")
+
+
+def check(cfg):
+    found = settings.problems(cfg)
+    if found:
+        print("Still to do:\n" + "\n".join(f"- {p}" for p in found))
+        return 1
+    print("All filled in, and every key is present.")
+    cost = settings.monthly_scraper_cost(cfg)
+    print(f"Estimated scraper cost: ${cost:.2f} a month (Apify's free credit is ${settings.FREE_APIFY_CREDIT:.2f}).")
+    if cost > settings.FREE_APIFY_CREDIT:
+        print("Warning: that's over the free credit, so runs would stop before the month ends. "
+              "Use fewer subreddits or lower posts_per_subreddit.")
+    if not cfg.get("enabled"):
+        print("Next: choose run-now to try it, then set enabled: true for it to run by itself.")
+    return 0
 
 
 def test_scraper(cfg, name):
@@ -183,17 +201,17 @@ def main():
     parser.add_argument("--test-scraper", nargs="?", const="", default=None)
     args = parser.parse_args()
 
-    cfg = settings.load(ROOT / "config.yaml")
+    try:
+        cfg = settings.load(ROOT / "config.yaml")
+    except settings.ConfigError as error:
+        print(f"FAILED: {error}")
+        return 1
 
     if args.demo:
         return demo(cfg)
 
     if args.check:
-        found = settings.problems(cfg)
-        if not cfg.get("enabled"):
-            found.append("enabled: change to true when everything else is done.")
-        print("\n".join(f"- {p}" for p in found) or "All set.")
-        return 1 if found else 0
+        return check(cfg)
 
     if not cfg.get("enabled") and not args.now and args.test_scraper is None:
         print("Switched off (enabled: false in config.yaml). Nothing to do.")

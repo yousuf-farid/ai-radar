@@ -5,19 +5,20 @@ import requests
 
 from . import render
 
-FROM_ADDRESS = "AI Radar <onboarding@resend.dev>"
+FROM_ADDRESS = "onboarding@resend.dev"
 
 
 class DeliverError(Exception):
     pass
 
 
-def _email(subject, html, text):
+def _email(cfg, subject, html, text):
+    sender = os.environ.get("DIGEST_FROM") or FROM_ADDRESS
     response = requests.post(
         "https://api.resend.com/emails",
         headers={"Authorization": f"Bearer {os.environ['RESEND_API_KEY']}"},
         json={
-            "from": os.environ.get("DIGEST_FROM") or FROM_ADDRESS,
+            "from": f"{cfg.get('name', 'AI Radar')} <{sender}>",
             "to": [os.environ["DIGEST_EMAIL"]],
             "subject": subject,
             "html": html,
@@ -47,7 +48,7 @@ def _slack(subject, text):
 def _send(cfg, subject, html, text):
     channel = cfg["delivery"]["channel"]
     if channel in ("email", "both"):
-        _email(subject, html, text)
+        _email(cfg, subject, html, text)
     if channel in ("slack", "both"):
         _slack(subject, text)
 
@@ -55,7 +56,7 @@ def _send(cfg, subject, html, text):
 def digest(cfg, the_digest, dashboard_url=""):
     _send(
         cfg,
-        render.subject(the_digest),
+        render.subject(the_digest, cfg.get("name", "AI Radar")),
         render.email_html(the_digest, dashboard_url),
         render.plain_text(the_digest, dashboard_url),
     )
@@ -64,6 +65,7 @@ def digest(cfg, the_digest, dashboard_url=""):
 def alert(cfg, reason):
     """Tell the owner something broke. Never raises: the failure itself must still be reported."""
     try:
-        _send(cfg, "AI Radar could not run today", f"<p>{render.escape(reason)}</p>", reason)
+        title = f"{cfg.get('name', 'AI Radar')} could not run today"
+        _send(cfg, title, f"<p>{render.escape(reason)}</p>", reason)
     except Exception as error:  # noqa: BLE001 - a failed alert must not hide the original failure
         print(f"Could not send the failure alert either: {type(error).__name__}")

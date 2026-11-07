@@ -11,7 +11,7 @@ PAGE = """<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<title>AI Radar</title>
+<title>%(name)s</title>
 <style>
 :root{--bg:#f7f7f5;--card:#fff;--ink:#1c1c1a;--soft:#66665f;--line:#e4e4de;--accent:#b4451f;--warn-bg:#fdf3e1;--warn:#7a5310}
 @media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#20201e;--ink:#eeeeea;--soft:#a3a39b;--line:#33332f;--accent:#ef8a62;--warn-bg:#352a15;--warn:#e8c483}}
@@ -34,7 +34,7 @@ p{margin:0 0 6px;font-size:15px}
 .warn{font-size:13px;background:var(--warn-bg);color:var(--warn);padding:6px 10px;border-radius:6px;margin:8px 0 0}
 .empty{color:var(--soft)}
 </style></head><body><main>
-<h1>AI Radar</h1>
+<h1>%(name)s</h1>
 <p class="sub">%(updated)s</p>
 <div class="chips" id="chips">%(chips)s</div>
 %(days)s
@@ -74,7 +74,7 @@ def _card(pick):
 </article>"""
 
 
-def dashboard(digests, categories):
+def dashboard(digests, categories, name="AI Radar"):
     """digests: newest first."""
     chips = ['<button data-cat="" aria-pressed="true">All</button>'] + [
         f'<button data-cat="{escape(c, quote=True)}" aria-pressed="false">{escape(c)}</button>'
@@ -85,11 +85,11 @@ def dashboard(digests, categories):
         cards = "\n".join(_card(p) for p in digest["picks"]) or '<p class="empty">Nothing worth your time today.</p>'
         days.append(f"<section><h2>{_nice_date(digest['date'])}</h2>\n{cards}\n</section>")
     updated = f"Updated {_nice_date(digests[0]['date'])}" if digests else "No digests yet"
-    return PAGE % {"updated": updated, "chips": "".join(chips), "days": "\n".join(days)}
+    return PAGE % {"name": escape(name), "updated": updated, "chips": "".join(chips), "days": "\n".join(days)}
 
 
-def subject(digest):
-    return f"AI Radar: {len(digest['picks'])} picks for {_nice_date(digest['date'])}"
+def subject(digest, name="AI Radar"):
+    return f"{name}: {len(digest['picks'])} picks for {_nice_date(digest['date'])}"
 
 
 def email_html(digest, dashboard_url=""):

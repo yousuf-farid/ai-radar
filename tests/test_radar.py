@@ -67,6 +67,58 @@ def test_bad_time_and_timezone_are_reported(cfg):
     assert "delivery time" in found and "timezone" in found
 
 
+@pytest.mark.parametrize("path", sorted((ROOT / "examples").glob("*.yaml")), ids=lambda p: p.name)
+def test_worked_examples_are_complete(path):
+    example = settings.load(path)
+    assert settings.problems(example, check_secrets=False) == []
+    assert example["enabled"] is False
+    assert settings.monthly_scraper_cost(example) <= settings.FREE_APIFY_CREDIT
+
+
+def test_examples_have_every_setting_in_the_template():
+    template = set(settings.load(ROOT / "config.yaml"))
+    for path in (ROOT / "examples").glob("*.yaml"):
+        assert template == set(settings.load(path)), path.name
+
+
+def test_broken_config_gets_a_plain_english_error(tmp_path):
+    broken = tmp_path / "config.yaml"
+    broken.write_text("name: ok\n  bad: [indent\n", encoding="utf-8")
+    with pytest.raises(settings.ConfigError, match="formatting problem near line"):
+        settings.load(broken)
+
+
+def test_bad_numbers_are_reported(cfg):
+    cfg["posts_to_show"] = "ten"
+    assert any("posts_to_show" in p for p in settings.problems(cfg, check_secrets=False))
+
+
+@pytest.mark.parametrize("scraper,subs,each,cost", [("harshmaur", 5, 10, 3.60), ("clearpath", 5, 10, 2.985)])
+def test_cost_estimate_matches_options_guide(cfg, scraper, subs, each, cost):
+    cfg.update(scraper=scraper, subreddits=["x"] * subs, posts_per_subreddit=each)
+    assert settings.monthly_scraper_cost(cfg) == pytest.approx(cost)
+
+
+def test_check_warns_over_budget_and_succeeds_while_switched_off(cfg, monkeypatch, capsys):
+    monkeypatch.setattr(settings, "problems", lambda _: [])
+    cfg.update(enabled=False, subreddits=["x"] * 10, posts_per_subreddit=25)
+    assert run.check(cfg) == 0
+    out = capsys.readouterr().out
+    assert "over the free credit" in out and "enabled: true" in out
+
+
+def test_check_lists_what_is_missing(cfg, monkeypatch, capsys):
+    monkeypatch.setattr(settings, "problems", lambda _: ["profile: fix me"])
+    assert run.check(cfg) == 1
+    assert "profile: fix me" in capsys.readouterr().out
+
+
+def test_custom_name_appears_everywhere(cfg):
+    day = {"date": "2026-11-07", "picks": []}
+    assert "<h1>Bench Notes</h1>" in render.dashboard([day], ["x"], "Bench Notes")
+    assert render.subject(day, "Bench Notes").startswith("Bench Notes:")
+
+
 def test_missing_secret_is_reported(cfg, monkeypatch):
     for name in ("APIFY_TOKEN", "ANTHROPIC_API_KEY", "RESEND_API_KEY", "DIGEST_EMAIL"):
         monkeypatch.delenv(name, raising=False)

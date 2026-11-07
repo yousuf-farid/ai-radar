@@ -1,0 +1,49 @@
+# Worked example: it doesn't have to be about AI.
+# This one is a weekly woodworking digest, sent to Slack on Mondays.
+
+enabled: false
+name: Bench Notes
+
+profile: |
+  What I do and what I use this for:
+  I'm a hobby woodworker with a small garage workshop and about one free
+  weekend a month. I want to get better without buying lots of machines.
+
+  How experienced I am, and what I already have:
+  Two years in. I have a table saw, a router and basic hand tools.
+
+  What I want more of:
+  Techniques I can practise, jig plans, honest tool reviews under £200,
+  and projects that can be finished in a weekend.
+
+  What I never want to see:
+  Showing off finished furniture with no method, and arguments about brands.
+
+examples_of_useful_posts:
+  - "A simple crosscut sled you can build in an afternoon"
+
+subreddits:
+  - woodworking
+  - BeginnerWoodWorking
+  - handtools
+
+posts_per_subreddit: 25
+posts_to_show: 8
+frequency: weekly
+
+categories:
+  - Techniques and how-tos
+  - Plans and jigs
+  - Tools and reviews
+
+delivery:
+  channel: slack
+  time: "08:00"
+  timezone: Europe/London
+
+scraper: clearpath
+model: claude-sonnet-5-5
+effort: medium
+max_post_chars: 2000
+remember_days: 60
+keep_raw_days: 14

@@ -11,11 +11,11 @@ PRICES = {
     "claude-haiku-5-5": (0.10, 0.50),
 }
 
-SYSTEM = """You curate a personal daily digest of Reddit posts about AI.
+SYSTEM = """You curate a personal digest of Reddit posts.
 
 Pick the posts most useful to this reader, not simply the most upvoted. Upvotes are a \
 signal of quality, not the goal. Favour things the reader can use straight away, such as \
-tools, skills, files and techniques, and anything that would save them hours of work.
+tools, resources and techniques, and anything that would save them hours of work.
 
 Write in plain English, for this reader's level. Be specific and don't hype. If a post \
 doesn't say enough to judge it, leave it out rather than guessing what it contains.

@@ -1,0 +1,56 @@
+# Worked example: someone non-technical using AI at work.
+# Copy what you like into config.yaml. Don't copy it word for word:
+# the digest is only as good as how honestly the profile describes YOU.
+
+enabled: false
+name: AI Radar
+
+profile: |
+  What I do and what I use AI for:
+  I run a five-person marketing agency. I use AI to draft client reports
+  and proposals, and I'm trying to automate our weekly reporting.
+
+  How technical I am, and the AI tools I already use:
+  Not a developer. I can follow step-by-step guides and copy commands,
+  but I can't debug code. I use Claude and Claude Code every day.
+
+  What I want more of:
+  Ready-made skills and tools I can use the same day, and workflows that
+  other small businesses actually use, with real results.
+
+  What I never want to see:
+  Arguments about benchmarks, model drama, memes, complaints about usage
+  limits, and anything that assumes I can write code.
+
+examples_of_useful_posts:
+  - "A skill file that turns meeting notes into follow-up emails"
+  - "How I automated my weekly client report, step by step"
+
+subreddits:
+  - ClaudeAI
+  - ClaudeCode
+  - ChatGPTPro
+  - PromptEngineering
+  - automation
+
+posts_per_subreddit: 10
+posts_to_show: 10
+frequency: daily
+
+categories:
+  - Tools, skills and resources
+  - Tutorials and how-tos
+  - AI news and updates
+  - Mindset and ways of working
+
+delivery:
+  channel: email
+  time: "07:30"
+  timezone: Europe/London
+
+scraper: harshmaur
+model: claude-opus-5-5
+effort: medium
+max_post_chars: 2000
+remember_days: 30
+keep_raw_days: 14

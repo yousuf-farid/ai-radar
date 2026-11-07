@@ -3,6 +3,10 @@
 #
 #  Replace anything that says FILL IN. Everything else already has
 #  a sensible default and can stay as it is.
+#  CUSTOMISE.md explains every setting, with worked examples.
+#
+#  Lines starting with # are notes and are ignored. Keep the spaces
+#  at the start of each line as they are.
 #
 #  Passwords and keys do NOT go here. This file may be public.
 #  They go in GitHub Secrets (see SETUP.md).
@@ -11,6 +15,9 @@
 # Leave this off until everything is filled in and the keys are added.
 # While it is false, the daily job does nothing and costs nothing.
 enabled: false
+
+# What to call your digest. Appears on the dashboard and in emails.
+name: AI Radar
 
 # ── 1. WHO IS THIS FOR? ──────────────────────────────────────
 # The most important setting. The AI uses this to decide what is
