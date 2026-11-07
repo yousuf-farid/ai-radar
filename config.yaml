@@ -1,0 +1,71 @@
+# ─────────────────────────────────────────────────────────────
+#  AI RADAR SETTINGS: the only file you need to edit
+#
+#  Replace anything that says FILL IN. Everything else already has
+#  a sensible default and can stay as it is.
+#
+#  Passwords and keys do NOT go here. This file may be public.
+#  They go in GitHub Secrets (see SETUP.md).
+# ─────────────────────────────────────────────────────────────
+
+# Leave this off until everything is filled in and the keys are added.
+# While it is false, the daily job does nothing and costs nothing.
+enabled: false
+
+# ── 1. WHO IS THIS FOR? ──────────────────────────────────────
+# The most important setting. The AI uses this to decide what is
+# useful to you. A few honest lines beat a polished paragraph.
+# Keep it to things you don't mind being public.
+profile: |
+  What I do and what I use AI for:
+  FILL IN
+
+  How technical I am, and the AI tools I already use:
+  FILL IN
+
+  What I want more of:
+  FILL IN
+
+  What I never want to see:
+  FILL IN
+
+# Optional but very useful: paste links or titles of posts you found
+# really valuable. Delete the example line if you have none yet.
+examples_of_useful_posts:
+  - "FILL IN (or delete this line)"
+
+# ── 2. WHERE TO LOOK ─────────────────────────────────────────
+# Names without the "r/". About 5 stays within the free scraper credit.
+subreddits:
+  - ClaudeAI
+  - ClaudeCode
+  # - add more here
+
+# ── 3. HOW MUCH, HOW OFTEN ───────────────────────────────────
+posts_per_subreddit: 10   # how many top posts to fetch from each
+posts_to_show: 10         # how many make it into your digest
+frequency: daily          # daily, or weekly (runs on Mondays)
+
+# ── 4. CATEGORIES ────────────────────────────────────────────
+# Every post gets one. They appear in this order, so put what you
+# want to see first at the top.
+categories:
+  - Tools, skills and resources
+  - Tutorials and how-tos
+  - AI news and updates
+  - Mindset and ways of working
+
+# ── 5. DELIVERY ──────────────────────────────────────────────
+delivery:
+  channel: email          # email, slack, both, or none (dashboard only)
+  time: "07:30"           # 24-hour clock. May arrive up to an hour later.
+  timezone: Europe/London
+  # Your email address goes in the DIGEST_EMAIL secret, not here.
+
+# ── ADVANCED: fine to leave alone ────────────────────────────
+scraper: harshmaur        # harshmaur or clearpath. See OPTIONS.md.
+model: claude-opus-5-5    # or claude-sonnet-5-5, or claude-haiku-5-5
+effort: medium            # low, medium or high: how hard the AI thinks
+max_post_chars: 2000      # longer posts are cut to this before the AI reads them
+remember_days: 30         # don't repeat a post shown in this many days
+keep_raw_days: 14         # how long to keep the raw scraper files

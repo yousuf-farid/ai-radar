@@ -1,0 +1,91 @@
+name: AI Radar
+
+# Checks hourly. run.py decides whether a digest is due, using the time and
+# timezone in config.yaml, so nothing here needs editing.
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "What to do"
+        type: choice
+        default: run-now
+        options:
+          - run-now
+          - check-setup
+          - test-harshmaur
+          - test-clearpath
+
+concurrency:
+  group: radar
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  radar:
+    # The template itself never runs. Only people's copies of it do.
+    if: ${{ !github.event.repository.is_template }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      changed: ${{ steps.save.outputs.changed }}
+    env:
+      APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      DIGEST_EMAIL: ${{ secrets.DIGEST_EMAIL }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Run
+        run: |
+          case "${{ inputs.action }}" in
+            run-now)      python run.py --now ;;
+            check-setup)  python run.py --check ;;
+            test-harshmaur) python run.py --test-scraper harshmaur ;;
+            test-clearpath) python run.py --test-scraper clearpath ;;
+            *)            python run.py ;;
+          esac
+
+      # Runs even after a failure, so a retry doesn't pay for the same step twice.
+      - name: Save results
+        id: save
+        if: always()
+        run: |
+          git add data
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git config user.name "ai-radar"
+            git config user.email "ai-radar@users.noreply.github.com"
+            git commit -m "Digest $(date -u +%F)"
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare dashboard
+        if: always() && steps.save.outputs.changed == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  dashboard:
+    needs: radar
+    if: always() && needs.radar.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/deploy-pages@v4
